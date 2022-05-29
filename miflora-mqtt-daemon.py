@@ -404,13 +404,15 @@ while True:
                         print_line('Retrying due to exception: {}'.format(e), error=True)
                     else:
                         print_line('Retrying ...', warning=True)
+                flora['poller'] = MiFloraPoller(mac=mac, backend=BluepyBackend, cache_timeout=miflora_cache_timeout, retries=3, adapter=used_adapter)
                 flora['poller']._cache = None
                 flora['poller']._last_read = None
+                sleep(10.0)
 
         if not flora['poller']._cache:
             flora['stats']['failure'] += 1
-            if reporting_mode == 'mqtt-homie':
-                mqtt_client[flora_name.lower()].publish('{}/{}/$state'.format(base_topic, flora_name.lower()), 'disconnected', 1, True)
+            if reporting_mode == 'mqtt-homie' or reporting_mode == 'mqtt-json':
+                mqtt_client.publish('{}/{}/$state'.format(base_topic, flora_name), 'disconnected', 1, True)
             print_line('Failed to retrieve data from Mi Flora sensor "{}" ({}), success rate: {:.0%}'.format(
                 flora['name_pretty'], flora['mac'], flora['stats']['success']/flora['stats']['count']
                 ), error = True, sd_notify = True)
@@ -425,6 +427,7 @@ while True:
 
         if reporting_mode == 'mqtt-json':
             print_line('Publishing to MQTT topic "{}/{}"'.format(base_topic, flora_name))
+            mqtt_client.publish('{}/{}/$state'.format(base_topic, flora_name), 'ready', 1, True)
             mqtt_client.publish('{}/{}'.format(base_topic, flora_name), json.dumps(data))
             sleep(0.5) # some slack for the publish roundtrip and callback function
         elif reporting_mode == 'thingsboard-json':
