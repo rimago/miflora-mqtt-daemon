@@ -20,6 +20,9 @@ import sdnotify
 from signal import signal, SIGPIPE, SIG_DFL
 signal(SIGPIPE,SIG_DFL)
 
+import logging
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
 project_name = 'Xiaomi Mi Flora Plant Sensor MQTT Client/Daemon'
 project_url = 'https://github.com/ThomDietrich/miflora-mqtt-daemon'
 
@@ -101,7 +104,12 @@ except IOError:
 
 reporting_mode = config['General'].get('reporting_method', 'mqtt-json')
 used_adapter = config['General'].get('adapter', 'hci0')
+conn_timeout = config['General'].getint('conn_timeout', None)
 daemon_enabled = config['Daemon'].getboolean('enabled', True)
+
+if conn_timeout < 0:
+    conn_timeout = None
+print_line('using conn_timeout:   {}'.format(conn_timeout))
 
 if reporting_mode == 'mqtt-homie':
     default_base_topic = 'homie'
@@ -193,7 +201,7 @@ for [name, mac] in config['Sensors'].items():
     print('Name:          "{}"'.format(name_pretty))
     # print_line('Attempting initial connection to Mi Flora sensor "{}" ({})'.format(name_pretty, mac), console=False, sd_notify=True)
 
-    flora_poller = MiFloraPoller(mac=mac, backend=BluepyBackend, cache_timeout=miflora_cache_timeout, retries=3, adapter=used_adapter)
+    flora_poller = MiFloraPoller(mac=mac, backend=BluepyBackend, cache_timeout=miflora_cache_timeout, adapter=used_adapter, conn_timeout=conn_timeout)
     flora['poller'] = flora_poller
     flora['name_pretty'] = name_pretty
     flora['mac'] = flora_poller._mac
@@ -404,7 +412,7 @@ while True:
                         print_line('Retrying due to exception: {}'.format(e), error=True)
                     else:
                         print_line('Retrying ...', warning=True)
-                flora['poller'] = MiFloraPoller(mac=mac, backend=BluepyBackend, cache_timeout=miflora_cache_timeout, retries=3, adapter=used_adapter)
+                flora['poller'] = MiFloraPoller(mac=flora['poller']._mac, backend=BluepyBackend, cache_timeout=miflora_cache_timeout, adapter=used_adapter, conn_timeout=conn_timeout)
                 flora['poller']._cache = None
                 flora['poller']._last_read = None
                 sleep(10.0)
@@ -476,6 +484,9 @@ while True:
         else:
             raise NameError('Unexpected reporting_mode.')
         print()
+        print_line('Sleeping ({} seconds) ...'.format(5.0))
+        sleep(5.0)
+        
 
     print_line('Status messages published', console=False, sd_notify=True)
 
