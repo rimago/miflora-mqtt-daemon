@@ -29,7 +29,8 @@
 
 # The bluetooth adapter that should be used to connect to Mi Flora devices (Default: hci0)
 #adapter = hci0
-#conn_timeout = None
+# Timeout in seconds used for the btle operations
+#btle_timeout = None
 
 [Daemon]
 

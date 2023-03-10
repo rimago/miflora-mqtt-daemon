@@ -2,9 +2,9 @@
 # miflora==0.7.1
 miflora @ git+https://github.com/rimago/miflora.git
 # bluepy==1.3.0
-bluepy @ git+https://github.com/IanHarvey/bluepy.git
-
+bluepy @ git+https://github.com/rimago/bluepy.git
 # btlewrap==0.0.10
+
 btlewrap @ git+https://github.com/rimago/btlewrap.git
 paho-mqtt==1.4.0
 wheel==0.29.0
